@@ -42,7 +42,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ secrets.GHCR_PAT }}
 
 
       # Install the cosign tool except on PR
@@ -67,10 +67,10 @@ jobs:
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.docker_password }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
       
       - name: Log secret value
-        run: echo "${{ secrets.docker_password }}"
+        run: echo "${{ secrets.DOCKER_PASSWORD }}"
       # Extract metadata (tags, labels) for Docker
       # https://github.com/docker/metadata-action
       - name: Extract Docker metadata
