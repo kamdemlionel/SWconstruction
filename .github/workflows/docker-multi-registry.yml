@@ -20,7 +20,7 @@ jobs:
     env:
       IMAGE_NAME: swconstruction
       REGISTRY: ${{ secrets.USE_GHCR == 'true' && 'ghcr.io' || 'docker.io' }}
-      DOCKER_USER: ${{ secrets.USE_GHCR == 'true' && github.repository_owner || secrets.DOCKER_USERNAME }}
+      DOCKER_USER: ${{ secrets.USE_GHCR == 'true' && github.repository_owner || secrets.DOCKER_USERNAME || github.repository_owner }}
 
     steps:
       - name: Checkout repository
@@ -49,12 +49,15 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.DOCKER_USER }}/${{ env.IMAGE_NAME }}
 
+      - name: Debug Image Tag
+        run: echo "${{ env.REGISTRY }}/${{ env.DOCKER_USER }}/${{ env.IMAGE_NAME }}"
+
       - name: Build and Push Docker Image
         id: build-and-push
         uses: docker/build-push-action@v5.0.0
         with:
           context: .
-          push: true
+          push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
