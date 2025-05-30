@@ -2,7 +2,7 @@ name: Docker Image CI/CD
 
 on:
   schedule:
-    - cron: '42 10 * * *'
+    - cron: '42 10 * * *' # Runs daily at 10:42 UTC
   push:
     branches: [ "main" ]
     tags: [ 'v*.*.*' ]
@@ -12,11 +12,6 @@ on:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-      id-token: write
-
     env:
       IMAGE_NAME: swconstruction
       REGISTRY: ${{ secrets.USE_GHCR == 'true' && 'ghcr.io' || 'docker.io' }}
@@ -25,6 +20,21 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Detect OS and Architecture
+        run: |
+          echo "Operating System: $(uname -s)"
+          echo "Architecture: $(uname -m)"
+          case "$(uname -s)" in
+            Linux) echo "✅ Linux OS detected" ;;
+            Darwin) echo "✅ macOS detected" ;;
+            *) echo "❌ Unsupported OS $(uname -s)"; exit 1 ;;
+          esac
+          case "$(uname -m)" in
+            x86_64) echo "✅ x86_64 architecture detected" ;;
+            arm64) echo "✅ arm64 architecture detected" ;;
+            *) echo "❌ Unsupported architecture $(uname -m)"; exit 1 ;;
+          esac
 
       - name: Install cosign
         if: github.event_name != 'pull_request'
@@ -68,4 +78,5 @@ jobs:
         env:
           TAGS: ${{ steps.meta.outputs.tags }}
           DIGEST: ${{ steps.build-and-push.outputs.digest }}
-        run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
+        run: |
+          echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
