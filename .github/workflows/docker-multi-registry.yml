@@ -76,7 +76,14 @@ jobs:
       - name: Sign the Published Docker Image
         if: github.event_name != 'pull_request'
         env:
-          TAGS: ${{ steps.meta.outputs.tags }}
-          DIGEST: ${{ steps.build-and-push.outputs.digest }}
-        run: |
-          echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
+            TAGS: ${{ steps.meta.outputs.tags }}
+            DIGEST: ${{ steps.build-and-push.outputs.digest }}
+            COSIGN_EXPERIMENTAL: "true"
+            run: |
+                for attempt in 1 2 3; do
+                if echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}; then
+                  break
+                fi
+                echo "Cosign signing failed, retrying in 10 seconds... (attempt $attempt)"
+                sleep 10
+                done
